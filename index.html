@@ -1,0 +1,2217 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanjineer - Construction Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    body { box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+    
+    /* Login Screen Styles */
+    #login-overlay {
+        position: fixed; inset: 0; z-index: 100;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+        background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);
+        padding: 2.5rem; border-radius: 1.5rem; width: 100%; max-width: 400px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1);
+    }
+    .login-input {
+        width: 100%; padding: 0.75rem 1rem; margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 0.75rem; color: white; outline: none; transition: all 0.2s;
+    }
+    .login-input:focus { border-color: #6366f1; background: rgba(255, 255, 255, 0.1); }
+    .login-btn {
+        width: 100%; padding: 0.75rem; background: #6366f1; color: white;
+        border-radius: 0.75rem; font-weight: 600; transition: all 0.2s;
+    }
+    .login-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+
+    /* App Styles */
+    .tab-content { animation: fadeSlideIn 0.15s ease-out; }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-btn { position: relative; transition: all 0.15s ease; background: transparent; }
+    .tab-btn.active { background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15)); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .calendar-day { transition: transform 0.1s ease, background-color 0.1s ease; min-height: 3.5rem; }
+    .calendar-day:hover { transform: scale(1.02); }
+    .expand-content { max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; }
+    .expand-content.expanded { max-height: 600px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+  </style>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+
+  <div id="login-overlay">
+      <div class="login-card">
+          <div class="text-center mb-8">
+              <h1 class="text-3xl font-bold text-white mb-1">Sanjineer</h1>
+              <p class="text-indigo-200 text-sm">Construction Manager</p>
+          </div>
+          <div id="auth-forms">
+              <input type="email" id="login-email" class="login-input" placeholder="Email Address">
+              <input type="password" id="login-password" class="login-input" placeholder="Password">
+              <button id="btn-login" class="login-btn mb-3">Log In</button>
+              <button id="btn-signup" class="w-full py-3 bg-white/10 text-white rounded-xl font-semibold hover:bg-white/20 transition-all">Create Account</button>
+              <p id="login-error" class="text-rose-400 text-sm text-center mt-4 hidden"></p>
+          </div>
+          <div id="loading-auth" class="hidden text-center text-white">
+            <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            Connecting to Cloud...
+          </div>
+      </div>
+  </div>
+
+  <div id="app" class="h-full w-full flex flex-col overflow-hidden hidden"><header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-3 shadow-2xl">
+    <div class="flex items-center justify-between">
+     <div class="flex items-start gap-3">
+      <div class="relative flex-shrink-0"><div class="relative w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-2xl">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+       </div>
+      </div>
+      <div>
+       <div class="flex items-center gap-2 mb-0.5">
+        <h1 id="company-name" class="text-2xl font-black text-white tracking-tight leading-tight" style="letter-spacing: 0.05em; text-shadow: 2px 2px 8px rgba(0,0,0,0.3);">Sanjineer</h1>
+        <p id="header-date-inline" class="text-purple-200 text-xs font-medium"></p>
+       </div>
+       <p id="user-email-display" class="text-purple-100 text-sm font-semibold tracking-wide"></p>
+       <p id="company-subtitle" class="text-purple-100 text-xs font-medium mt-1">Construction Manager</p>
+      </div>
+     </div>
+     <div class="text-right flex flex-col items-end gap-2">
+      <div class="text-center">
+       <p class="text-purple-200 text-xs">Total Spends</p>
+       <p id="header-spends" class="text-rose-300 font-bold text-2xl">₹0</p>
+      </div>
+      <button id="btn-logout" class="text-xs text-white/70 hover:text-white bg-white/10 px-3 py-1 rounded-full">Logout</button>
+     </div>
+    </div>
+   </header><nav class="bg-white/10 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30 px-2">
+    <div class="flex overflow-x-auto hide-scrollbar gap-2 py-1.5"><button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="dashboard"> <span class="flex items-center gap-1.5"> <span class="text-base">📊</span> <span>Dashboard</span> </span> </button> <button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="daily"> <span class="flex items-center gap-1.5"> <span class="text-base">📋</span> <span>Daily Report</span> </span> </button> <button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="attendance"> <span class="flex items-center gap-1.5">
+       <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2" /> <line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="2" /> <circle cx="8" cy="14" r="1.5" fill="currentColor" /> <circle cx="12" cy="14" r="1.5" fill="currentColor" /> <circle cx="16" cy="14" r="1.5" fill="currentColor" /> <circle cx="8" cy="18" r="1.5" fill="currentColor" /> <circle cx="12" cy="18" r="1.5" fill="currentColor" /> <path d="M7 3 L7 5 M17 3 L17 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+       </svg><span>Attendance</span> </span> </button> <button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="material"> <span class="flex items-center gap-1.5"> <span class="text-base">🧱</span> <span>Material</span> </span> </button> <button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="tools"> <span class="flex items-center gap-1.5"> <span class="text-base">🔧</span> <span>Tools</span> </span> </button> <button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="rentals"> <span class="flex items-center gap-1.5"> <span class="text-base">📦</span> <span>Rentals</span> </span> </button> <button class="tab-btn flex-shrink-0 px-5 py-2 text-xs font-semibold text-white/70 hover:text-white transition-all rounded-lg hover:bg-white/10" data-tab="contractors"> <span class="flex items-center gap-1.5"> <span class="text-base">👥</span> <span>Contractors</span> </span> </button>
+    </div>
+   </nav><main class="flex-1 overflow-y-auto p-4" style="display: block;"><div id="tab-dashboard" class="tab-content" style="display: block;"><div class="grid grid-cols-2 gap-2.5 mb-3">
+      <div class="stat-card bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-amber-100 text-[10px] font-medium">Advances Given</p>
+       <p id="dash-advance" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-amber-200 text-[10px] mt-0.5">This Month</p>
+      </div>
+      <div class="stat-card bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-rose-100 text-[10px] font-medium">Remaining Payments</p>
+       <p id="dash-remaining" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-rose-200 text-[10px] mt-0.5">After Advances</p>
+      </div>
+     </div>
+     <div class="grid grid-cols-3 gap-2.5 mb-3">
+      <div class="stat-card bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-emerald-100 text-[10px] font-medium">Material Purchase</p>
+       <p id="dash-material" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-emerald-200 text-[10px] mt-0.5">This Month</p>
+      </div>
+      <div class="stat-card bg-gradient-to-br from-cyan-500 to-sky-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-cyan-100 text-[10px] font-medium">Petty Cash Deposited</p>
+       <p id="dash-petty" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-cyan-200 text-[10px] mt-0.5">Total</p>
+      </div>
+      <div class="stat-card bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-violet-100 text-[10px] font-medium">Remaining Petty Cash</p>
+       <p id="dash-petty-remaining" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-violet-200 text-[10px] mt-0.5">Available</p>
+      </div>
+     </div>
+     <div class="grid grid-cols-2 gap-2.5 mb-3">
+      <div class="stat-card bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-indigo-100 text-[10px] font-medium">Rental Expenses</p>
+       <p id="dash-rental-out" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-indigo-200 text-[10px] mt-0.5">Equipment Rented</p>
+      </div>
+      <div class="stat-card bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-3 text-white shadow-xl">
+       <p class="text-green-100 text-[10px] font-medium">Rental Income</p>
+       <p id="dash-rental-in" class="text-xl font-bold mt-0.5">₹0</p>
+       <p class="text-green-200 text-[10px] mt-0.5">Given to Others</p>
+      </div>
+     </div><div class="glass-effect rounded-xl p-3 shadow-xl">
+      <h3 class="text-base font-bold text-gray-800 mb-2.5">Teams Overview (This Month)</h3>
+      <div id="team-details" class="space-y-2.5">
+       <p class="text-gray-400 text-center py-3 text-sm">No teams added yet</p>
+      </div>
+     </div>
+    </div><div id="tab-daily" class="tab-content" style="display: none;">
+     <div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <div class="flex items-center justify-between">
+       <h3 class="text-lg font-bold text-gray-800">📅 Select Date</h3><input type="date" id="daily-report-date" class="px-4 py-2 border border-gray-200 rounded-xl font-medium">
+      </div>
+     </div>
+     <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl p-3 text-white">
+       <p class="text-xs text-rose-100">Advances</p>
+       <p id="daily-payments" class="text-xl font-bold">₹0</p>
+      </div>
+      <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-3 text-white">
+       <p class="text-xs text-amber-100">Material Expenses</p>
+       <p id="daily-material" class="text-xl font-bold">₹0</p>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">🧱 Materials Purchased</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+          <th class="px-3 py-2 text-left rounded-l-lg">Material Name</th>
+          <th class="px-3 py-2 text-center">Quantity</th>
+          <th class="px-3 py-2 text-right rounded-r-lg">Amount</th>
+         </tr>
+        </thead>
+        <tbody id="daily-materials-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="3" class="px-3 py-4 text-center text-gray-400">No materials purchased</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">👷 Labour Summary</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+          <th class="px-3 py-2 text-left rounded-l-lg">Worker Type</th>
+          <th class="px-3 py-2 text-center">Count</th>
+          <th class="px-3 py-2 text-center">Total Hours</th>
+          <th class="px-3 py-2 text-left">Work Done</th>
+          <th class="px-3 py-2 text-center rounded-r-lg">Action</th>
+         </tr>
+        </thead>
+        <tbody id="daily-labour-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="5" class="px-3 py-4 text-center text-gray-400">No attendance recorded today</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div><div id="tab-attendance" class="tab-content" style="display: none;"><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">➕ Add New Worker</h3>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3"><input type="text" id="worker-name" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Worker Name"> <select id="worker-category" class="px-3 py-2 border border-gray-200 rounded-xl bg-white"> <option value="">Select Role</option> <option value="Mason">Mason</option> <option value="Labour">Labour</option> <option value="Carpenter">Carpenter</option> <option value="Helper">Helper</option> <option value="Fitter">Fitter</option> <option value="Fitter Helper">Fitter Helper</option> <option value="Supervisor">Supervisor</option> </select> <select id="worker-team-select" class="px-3 py-2 border border-gray-200 rounded-xl bg-white"> <option value="">Select Team</option> </select> <input type="number" id="worker-wage" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Hourly Wage (₹)" step="any"> <button id="add-worker-btn" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Add Worker </button>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">👷 Workers List</h3>
+      <div id="workers-list" class="space-y-3">
+       <p class="text-gray-400 text-center py-4">No workers added yet</p>
+      </div>
+     </div>
+    </div><div id="tab-material" class="tab-content" style="display: none;"><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">💰 Deposit Petty Cash</h3>
+      <div class="grid grid-cols-3 gap-3"><input type="number" id="petty-cash-amount" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Amount (₹)" step="any"> <input type="date" id="petty-cash-date" class="px-3 py-2 border border-gray-200 rounded-xl"> <button id="add-petty-cash-btn" class="bg-gradient-to-r from-cyan-500 to-sky-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Deposit Cash </button>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">➕ Add Material Purchase</h3>
+      <div class="grid grid-cols-2 gap-3 mb-3"><input type="text" id="material-name" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Material Name"> <input type="number" id="material-quantity" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Quantity" step="any"> <input type="number" id="material-cost" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Total Cost (₹)" step="any"> <input type="date" id="material-date" class="px-3 py-2 border border-gray-200 rounded-xl">
+      </div><button id="add-material-btn" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Add Material </button>
+     </div><div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl p-4 text-white">
+       <p class="text-xs text-emerald-100">Total Material Cost</p>
+       <p id="total-material-cost" class="text-2xl font-bold">₹0</p>
+      </div>
+      <div class="bg-gradient-to-br from-cyan-500 to-sky-500 rounded-xl p-4 text-white">
+       <p class="text-xs text-cyan-100">Petty Cash Deposited</p>
+       <p id="total-petty-cash" class="text-2xl font-bold">₹0</p>
+      </div>
+      <div class="bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl p-4 text-white">
+       <p class="text-xs text-violet-100">Remaining Petty Cash</p>
+       <p id="remaining-petty-cash" class="text-2xl font-bold">₹0</p>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">📦 Materials &amp; Petty Cash</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+          <th class="px-3 py-2 text-left rounded-l-lg">Date</th>
+          <th class="px-3 py-2 text-left">Name</th>
+          <th class="px-3 py-2 text-center">Qty</th>
+          <th class="px-3 py-2 text-right">Cost</th>
+          <th class="px-3 py-2 text-center rounded-r-lg">Action</th>
+         </tr>
+        </thead>
+        <tbody id="materials-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="5" class="px-3 py-4 text-center text-gray-400">No materials added yet</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div><div id="tab-tools" class="tab-content" style="display: none;"><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">➕ Add Tool / Equipment</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3"><input type="text" id="tool-name" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Tool Name"> <input type="number" id="tool-quantity" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Quantity" step="any"> <input type="date" id="tool-date" class="px-3 py-2 border border-gray-200 rounded-xl"> <input type="number" id="tool-cost" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Cost (Optional)" step="any">
+      </div><button id="add-tool-btn" class="w-full mt-3 bg-gradient-to-r from-violet-500 to-purple-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Add Tool </button>
+     </div><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">🔧 Tools &amp; Equipment</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="bg-gradient-to-r from-violet-500 to-purple-500 text-white">
+          <th class="px-3 py-2 text-left rounded-l-lg">Tool</th>
+          <th class="px-3 py-2 text-center">Qty</th>
+          <th class="px-3 py-2 text-center">Date</th>
+          <th class="px-3 py-2 text-right">Cost</th>
+          <th class="px-3 py-2 text-center rounded-r-lg">Action</th>
+         </tr>
+        </thead>
+        <tbody id="tools-table" class="divide-y divide-gray-100">
+         <tr>
+          <td colspan="5" class="px-3 py-4 text-center text-gray-400">No tools added yet</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">📋 Tool Assignments</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3"><select id="assign-tool" class="px-3 py-2 border border-gray-200 rounded-xl bg-white"> <option value="">Select Tool</option> </select> <select id="assign-worker" class="px-3 py-2 border border-gray-200 rounded-xl bg-white"> <option value="">Select Worker</option> </select> <input type="date" id="assign-date" class="px-3 py-2 border border-gray-200 rounded-xl"> <button id="assign-tool-btn" class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Assign </button>
+      </div>
+      <div id="tool-assignments" class="space-y-2">
+       <p class="text-gray-400 text-center py-4">No tool assignments</p>
+      </div>
+     </div>
+    </div><div id="tab-rentals" class="tab-content" style="display: none;"><div class="glass-effect rounded-2xl p-3 mb-4 shadow-xl">
+      <div class="flex gap-2"><button id="rental-tab-borrowed" class="rental-tab-btn flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all bg-gradient-to-r from-rose-500 to-pink-500 text-white"> 📦 Equipment We Rented </button> <button id="rental-tab-given" class="rental-tab-btn flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all bg-white/20 text-gray-800 hover:bg-white/30"> 💰 Equipment Given to Others </button>
+      </div>
+     </div><div id="rental-section-borrowed" class="rental-section">
+      <div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+       <h3 class="text-lg font-bold text-gray-800 mb-3">📦 Equipment We Rented</h3>
+       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3"><input type="text" id="rental-name" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Item Name"> <input type="number" id="rental-quantity" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Quantity" step="any"> <input type="number" id="rental-rate" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Daily Rate (₹)" step="any"> <input type="date" id="rental-date" class="px-3 py-2 border border-gray-200 rounded-xl">
+       </div><button id="add-rental-btn" class="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Add Rental </button>
+       <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="bg-gradient-to-r from-rose-500 to-pink-500 text-white">
+           <th class="px-3 py-2 text-left rounded-l-lg">Item</th>
+           <th class="px-3 py-2 text-center">Qty</th>
+           <th class="px-3 py-2 text-center">From</th>
+           <th class="px-3 py-2 text-center">Days</th>
+           <th class="px-3 py-2 text-right">Total</th>
+           <th class="px-3 py-2 text-center rounded-r-lg">Action</th>
+          </tr>
+         </thead>
+         <tbody id="rentals-borrowed-table" class="divide-y divide-gray-100">
+          <tr>
+           <td colspan="6" class="px-3 py-4 text-center text-gray-400">No rentals yet</td>
+          </tr>
+         </tbody>
+         <tfoot>
+          <tr class="bg-rose-50">
+           <td colspan="4" class="px-3 py-2 font-bold text-rose-700">Total Rental Expense</td>
+           <td id="total-rental-expense" class="px-3 py-2 text-right font-bold text-rose-700">₹0</td>
+           <td></td>
+          </tr>
+         </tfoot>
+        </table>
+       </div>
+      </div>
+     </div><div id="rental-section-given" class="rental-section" style="display: none;">
+      <div class="glass-effect rounded-2xl p-4 shadow-xl">
+       <h3 class="text-lg font-bold text-gray-800 mb-3">💰 Equipment Given to Others</h3>
+       <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3"><input type="text" id="given-name" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Item Name"> <input type="number" id="given-quantity" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Quantity" step="any"> <input type="text" id="given-client" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Client Name"> <input type="number" id="given-rate" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Daily Rate (₹)" step="any"> <input type="date" id="given-date" class="px-3 py-2 border border-gray-200 rounded-xl">
+       </div><button id="add-given-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Add Given Rental </button>
+       <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+           <th class="px-3 py-2 text-left rounded-l-lg">Item</th>
+           <th class="px-3 py-2 text-center">Qty</th>
+           <th class="px-3 py-2 text-left">Client</th>
+           <th class="px-3 py-2 text-center">From</th>
+           <th class="px-3 py-2 text-center">Days</th>
+           <th class="px-3 py-2 text-right">Total</th>
+           <th class="px-3 py-2 text-center rounded-r-lg">Action</th>
+          </tr>
+         </thead>
+         <tbody id="rentals-given-table" class="divide-y divide-gray-100">
+          <tr>
+           <td colspan="7" class="px-3 py-4 text-center text-gray-400">No rentals given yet</td>
+          </tr>
+         </tbody>
+         <tfoot>
+          <tr class="bg-emerald-50">
+           <td colspan="5" class="px-3 py-2 font-bold text-emerald-700">Total Rental Income</td>
+           <td id="total-rental-income" class="px-3 py-2 text-right font-bold text-emerald-700">₹0</td>
+           <td></td>
+          </tr>
+         </tfoot>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div><div id="tab-contractors" class="tab-content" style="display: none;"><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <div class="flex items-center justify-between gap-3"><button id="prev-month-teams" class="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-xl font-medium hover:bg-indigo-200"> ← Previous </button>
+       <div class="text-center">
+        <p class="text-sm text-gray-600">Viewing Period</p>
+        <p id="current-period-teams" class="text-lg font-bold text-gray-800"></p>
+       </div><button id="next-month-teams" class="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-xl font-medium hover:bg-indigo-200"> Next → </button>
+      </div>
+     </div><div class="glass-effect rounded-2xl p-4 mb-4 shadow-xl">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">➕ Add Contractor/Staff</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3"><input type="text" id="contractor-name" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Name"> <select id="contractor-type" class="px-3 py-2 border border-gray-200 rounded-xl bg-white"> <option value="Team">Team/Contractor</option> <option value="Staff">Staff</option> </select> <input type="number" id="contractor-total" class="px-3 py-2 border border-gray-200 rounded-xl" placeholder="Total Contract (Optional)" step="any"> <button id="add-contractor-btn" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-2 rounded-xl font-medium hover:shadow-lg transition-all"> Add </button>
+      </div>
+     </div><div id="contractors-list" class="space-y-4">
+      <p class="text-white/50 text-center py-4">No teams added yet</p>
+     </div>
+    </div>
+   </main><div id="attendance-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90%] overflow-y-auto">
+     <div class="flex items-center justify-between mb-4">
+      <h3 id="modal-title" class="text-lg font-bold text-gray-800">Add Attendance</h3><button id="close-modal" class="text-gray-400 hover:text-gray-600">✕</button>
+     </div>
+     <div class="space-y-4">
+      <div><label class="text-sm font-medium text-gray-600">Date</label> <input type="date" id="modal-date" class="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl">
+      </div>
+      <div><label class="text-sm font-medium text-gray-600">Hours Worked</label> <input type="number" id="modal-hours" class="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl" placeholder="Enter hours" step="any" min="0" max="100">
+      </div>
+      <div><label class="text-sm font-medium text-gray-600">Advance Payment (Optional)</label> <input type="number" id="modal-advance" class="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl" placeholder="Enter advance amount" step="any">
+      </div><button id="save-attendance" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-medium hover:shadow-lg transition-all"> Save Attendance </button>
+     </div>
+    </div>
+   </div><div id="contractor-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+     <div class="flex items-center justify-between mb-4">
+      <h3 id="contractor-modal-title" class="text-lg font-bold text-gray-800">Add Advance Payment</h3><button id="close-contractor-modal" class="text-gray-400 hover:text-gray-600">✕</button>
+     </div>
+     <div class="space-y-4">
+      <div><label class="text-sm font-medium text-gray-600">Date</label> <input type="date" id="payment-date" class="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl">
+      </div>
+      <div><label class="text-sm font-medium text-gray-600">Amount</label> <input type="number" id="payment-amount" class="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl" placeholder="Enter amount" step="any">
+      </div><button id="save-payment" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl font-medium hover:shadow-lg transition-all"> Save Payment </button>
+     </div>
+    </div>
+   </div><div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-xl opacity-0 transition-opacity duration-300 z-50"><span id="toast-message"></span>
+   </div><div id="delete-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-6 py-3 rounded-xl shadow-xl hidden z-50 delete-confirm">
+    <div class="flex items-center gap-3"><span id="delete-message">Delete this record?</span> <button id="confirm-delete-btn" class="px-4 py-1 bg-white text-rose-600 rounded-lg font-medium hover:bg-rose-50"> Delete </button>
+    </div>
+   </div><div id="loading-overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden z-40 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 flex items-center gap-3">
+     <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div><span class="text-gray-700 font-medium">Saving...</span>
+    </div>
+   </div>
+  </div>
+  
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC8CzbjYQGJPYWPSq7WD3ArLn2vILV8ul4",
+    authDomain: "sanjineer8.firebaseapp.com",
+    projectId: "sanjineer8",
+    storageBucket: "sanjineer8.firebasestorage.app",
+    messagingSenderId: "695916645318",
+    appId: "1:695916645318:web:84439a38ceacf2671080c7",
+    measurementId: "G-P6DQ7TH18Q"
+  };
+
+  let app, auth, db, analytics;
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    analytics = getAnalytics(app);
+    console.log("Firebase initialized successfully");
+  } catch (e) {
+    console.error("Firebase initialization error:", e);
+  }
+
+    // --- Authentication Logic ---
+    const loginOverlay = document.getElementById('login-overlay');
+    const appContainer = document.getElementById('app');
+    const loginBtn = document.getElementById('btn-login');
+    const signupBtn = document.getElementById('btn-signup');
+    const logoutBtn = document.getElementById('btn-logout');
+    const authForms = document.getElementById('auth-forms');
+    const loadingAuth = document.getElementById('loading-auth');
+
+    async function handleAuth(isSignup) {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const errorMsg = document.getElementById('login-error');
+        
+        if(!email || !password) {
+            errorMsg.innerText = "Please enter email and password";
+            errorMsg.classList.remove('hidden');
+            return;
+        }
+
+        authForms.classList.add('hidden');
+        loadingAuth.classList.remove('hidden');
+        errorMsg.classList.add('hidden');
+
+        try {
+            if (isSignup) {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+            }
+            // onAuthStateChanged will handle the UI switch
+        } catch (error) {
+            authForms.classList.remove('hidden');
+            loadingAuth.classList.add('hidden');
+            errorMsg.innerText = error.message.replace("Firebase: ", "");
+            errorMsg.classList.remove('hidden');
+        }
+    }
+
+    loginBtn.addEventListener('click', () => handleAuth(false));
+    signupBtn.addEventListener('click', () => handleAuth(true));
+    logoutBtn.addEventListener('click', () => signOut(auth));
+
+    // --- Global Data Manager ---
+    let currentUser = null;
+    let unsubscribe = null;
+
+onAuthStateChanged(auth, (user) => {
+    console.log("Auth State Changed. User:", user ? user.email : "none");
+
+    // 1. Force hide the initial 'Sanjineer' loading overlay
+    if (loginOverlay) {
+        loginOverlay.style.setProperty('display', 'none', 'important');
+    }
+
+    if (user) {
+        // 2. LOGGED IN: Jump to dashboard, hide login boxes
+        currentUser = user;
+        if (authForms) authForms.style.setProperty('display', 'none', 'important');
+        if (appContainer) {
+            appContainer.style.setProperty('display', 'flex', 'important');
+            appContainer.classList.remove('hidden');
+        }
+        const emailDisp = document.getElementById('user-email-display');
+        if (emailDisp) emailDisp.innerText = user.email;
+        startDataListener(); 
+    } else {
+        // 3. LOGGED OUT: Show login boxes, hide dashboard
+        currentUser = null;
+        if (appContainer) {
+            appContainer.style.setProperty('display', 'none', 'important');
+        }
+        
+        // This forces your email/password boxes to appear
+        if (authForms) {
+            authForms.style.setProperty('display', 'block', 'important');
+            authForms.classList.remove('hidden');
+        }
+    }
+});
+  </script>
+
+  <script>
+    // --- SANJINEER LOGIC (RETAINED & UPDATED) ---
+
+    // App State
+    window.allData = []; // This is now populated by Firebase
+    let currentTab = 'dashboard';
+    let selectedWorkerId = null;
+    let selectedContractorId = null;
+    let currentViewMonth = new Date();
+    let dailyReportDate = new Date();
+    let deleteTimeout = null;
+    let pendingDelete = null;
+
+    // Initialize App
+    function initApp() {
+      setupTabs();
+      setupEventListeners();
+      updateDate();
+      setInterval(updateDate, 60000);
+      // Data is now loaded via Firebase listener, which calls updateAllViews
+    }
+
+    function updateAllViews() {
+      if (currentTab === 'dashboard') {
+        updateDashboard();
+      } else if (currentTab === 'daily') {
+        updateDailyReport();
+      } else if (currentTab === 'attendance') {
+        updateWorkersList();
+      } else if (currentTab === 'material') {
+        updateMaterialsTable();
+      } else if (currentTab === 'tools') {
+        updateToolsTable();
+      } else if (currentTab === 'rentals') {
+        updateRentalsTable();
+      } else if (currentTab === 'contractors') {
+        updateContractorsList();
+      }
+      updateDropdowns();
+    }
+
+    // Update current date
+    function updateDate() {
+      const now = new Date();
+      const dayOptions = { weekday: 'short' };
+      const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+      const dayName = now.toLocaleDateString('en-IN', dayOptions);
+      const dateString = now.toLocaleDateString('en-IN', dateOptions);
+      document.getElementById('header-date-inline').textContent = `${dayName}, ${dateString}`;
+    }
+
+    // Tab Navigation
+    function setupTabs() {
+      const tabs = document.querySelectorAll('.tab-btn');
+      
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tabName = this.dataset.tab;
+          switchTab(tabName);
+        });
+      });
+      
+      switchTab('dashboard');
+    }
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.remove('active', 'text-white');
+        btn.classList.add('text-white/70');
+      });
+      
+      const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-white/70');
+        activeBtn.classList.add('text-white', 'active');
+      }
+      
+      document.querySelectorAll('.tab-content').forEach(function(content) {
+        content.style.display = 'none';
+      });
+      
+      const selectedContent = document.getElementById(`tab-${tabName}`);
+      if (selectedContent) {
+        selectedContent.style.display = 'block';
+      }
+      
+      if (tabName === 'rentals') {
+        switchRentalTab('borrowed');
+      }
+      
+      updateAllViews();
+    }
+
+    function switchRentalTab(rentalTab) {
+      document.querySelectorAll('.rental-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-gradient-to-r', 'from-rose-500', 'to-pink-500', 'from-emerald-500', 'to-teal-500', 'text-white');
+        btn.classList.add('bg-white/20', 'hover:bg-white/30', 'text-gray-800');
+      });
+      
+      document.querySelectorAll('.rental-section').forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      if (rentalTab === 'borrowed') {
+        document.getElementById('rental-tab-borrowed').classList.remove('bg-white/20', 'hover:bg-white/30', 'text-gray-800');
+        document.getElementById('rental-tab-borrowed').classList.add('bg-gradient-to-r', 'from-rose-500', 'to-pink-500', 'text-white');
+        document.getElementById('rental-section-borrowed').style.display = 'block';
+      } else {
+        document.getElementById('rental-tab-given').classList.remove('bg-white/20', 'hover:bg-white/30', 'text-gray-800');
+        document.getElementById('rental-tab-given').classList.add('bg-gradient-to-r', 'from-emerald-500', 'to-teal-500', 'text-white');
+        document.getElementById('rental-section-given').style.display = 'block';
+      }
+    }
+
+    // Event Listeners
+    function setupEventListeners() {
+      document.getElementById('add-worker-btn').addEventListener('click', addWorker);
+      document.getElementById('add-petty-cash-btn').addEventListener('click', addPettyCash);
+      document.getElementById('petty-cash-date').valueAsDate = new Date();
+      document.getElementById('add-material-btn').addEventListener('click', addMaterial);
+      document.getElementById('material-date').valueAsDate = new Date();
+      document.getElementById('add-tool-btn').addEventListener('click', addTool);
+      document.getElementById('tool-date').valueAsDate = new Date();
+      document.getElementById('assign-tool-btn').addEventListener('click', assignTool);
+      document.getElementById('assign-date').valueAsDate = new Date();
+      document.getElementById('add-rental-btn').addEventListener('click', addRental);
+      document.getElementById('rental-date').valueAsDate = new Date();
+      document.getElementById('add-given-btn').addEventListener('click', addGivenRental);
+      document.getElementById('given-date').valueAsDate = new Date();
+      document.getElementById('add-contractor-btn').addEventListener('click', addContractor);
+      document.getElementById('close-modal').addEventListener('click', closeAttendanceModal);
+      document.getElementById('save-attendance').addEventListener('click', saveAttendance);
+      document.getElementById('close-contractor-modal').addEventListener('click', closeContractorModal);
+      document.getElementById('save-payment').addEventListener('click', saveContractorPayment);
+      document.getElementById('prev-month-teams').addEventListener('click', () => changeViewMonth(-1));
+      document.getElementById('next-month-teams').addEventListener('click', () => changeViewMonth(1));
+      document.getElementById('daily-report-date').addEventListener('change', (e) => {
+        dailyReportDate = new Date(e.target.value);
+        updateDailyReport();
+      });
+      document.getElementById('daily-report-date').valueAsDate = dailyReportDate;
+      document.getElementById('confirm-delete-btn').addEventListener('click', confirmDelete);
+      
+      document.getElementById('rental-tab-borrowed').addEventListener('click', () => switchRentalTab('borrowed'));
+      document.getElementById('rental-tab-given').addEventListener('click', () => switchRentalTab('given'));
+    }
+
+    // Helper Functions
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = message;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 3000);
+    }
+
+    function showDeleteConfirmation(message, deleteFunction) {
+      if (deleteTimeout) {
+        clearTimeout(deleteTimeout);
+      }
+      
+      pendingDelete = deleteFunction;
+      document.getElementById('delete-message').textContent = message;
+      document.getElementById('delete-toast').classList.remove('hidden');
+      
+      deleteTimeout = setTimeout(() => {
+        document.getElementById('delete-toast').classList.add('hidden');
+        pendingDelete = null;
+      }, 3000);
+    }
+
+    async function confirmDelete() {
+      if (pendingDelete) {
+        document.getElementById('delete-toast').classList.add('hidden');
+        if (deleteTimeout) {
+          clearTimeout(deleteTimeout);
+        }
+        await pendingDelete();
+        pendingDelete = null;
+      }
+    }
+
+    function showLoading() {
+      document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    function formatCurrency(amount) {
+      return '₹' + (amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function getToday() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function getCurrentMonth() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+    
+    function getMonthString(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+    
+    function formatMonthYear(date) {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return `${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+    
+    function changeViewMonth(delta) {
+      currentViewMonth = new Date(currentViewMonth.getFullYear(), currentViewMonth.getMonth() + delta, 1);
+      updateContractorsList();
+    }
+
+    function daysBetween(date1, date2) {
+      const d1 = new Date(date1);
+      const d2 = new Date(date2);
+      const diffTime = Math.abs(d2 - d1);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    // Data Operations
+    async function addWorker() {
+      const name = document.getElementById('worker-name').value.trim();
+      const category = document.getElementById('worker-category').value;
+      const teamSelect = document.getElementById('worker-team-select').value;
+      const wage = parseFloat(document.getElementById('worker-wage').value) || 0;
+      
+      if (!name || !category || !teamSelect) {
+        showToast('Please fill all fields');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'worker',
+        name,
+        category,
+        team_name: teamSelect,
+        hourly_wage: wage
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('worker-name').value = '';
+        document.getElementById('worker-category').value = '';
+        document.getElementById('worker-team-select').value = '';
+        document.getElementById('worker-wage').value = '';
+        showToast('Worker added successfully');
+      } else {
+        showToast('Failed to add worker');
+      }
+    }
+
+    async function deleteWorker(workerId) {
+      const worker = window.allData.find(d => d.__backendId === workerId);
+      if (!worker) return;
+      
+      showDeleteConfirmation(`Delete worker ${worker.name}?`, async () => {
+        showLoading();
+        const result = await window.dataSdk.delete(worker);
+        hideLoading();
+        
+        if (result.isOk) {
+          showToast('Worker deleted');
+        } else {
+          showToast('Failed to delete worker');
+        }
+      });
+    }
+
+    async function addPettyCash() {
+      const amount = parseFloat(document.getElementById('petty-cash-amount').value) || 0;
+      const date = document.getElementById('petty-cash-date').value;
+      
+      if (!amount || !date) {
+        showToast('Please enter amount and date');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'material',
+        material_name: 'Petty Cash Deposit',
+        quantity: 0,
+        cost: amount,
+        date,
+        is_petty_cash: true
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('petty-cash-amount').value = '';
+        showToast('Petty cash deposited successfully');
+      } else {
+        showToast('Failed to deposit petty cash');
+      }
+    }
+
+    async function addMaterial() {
+      const name = document.getElementById('material-name').value.trim();
+      const quantity = parseFloat(document.getElementById('material-quantity').value) || 0;
+      const cost = parseFloat(document.getElementById('material-cost').value) || 0;
+      const date = document.getElementById('material-date').value;
+      
+      if (!name || !date) {
+        showToast('Please enter material name and date');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'material',
+        material_name: name,
+        quantity,
+        cost,
+        date,
+        is_petty_cash: false
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('material-name').value = '';
+        document.getElementById('material-quantity').value = '';
+        document.getElementById('material-cost').value = '';
+        showToast('Material added successfully');
+      } else {
+        showToast('Failed to add material');
+      }
+    }
+
+    async function deleteMaterial(id) {
+      const item = window.allData.find(d => d.__backendId === id);
+      if (!item) return;
+      
+      showDeleteConfirmation(`Delete ${item.material_name}?`, async () => {
+        showLoading();
+        const result = await window.dataSdk.delete(item);
+        hideLoading();
+        
+        if (result.isOk) {
+          showToast('Entry deleted');
+        } else {
+          showToast('Failed to delete');
+        }
+      });
+    }
+
+    async function addTool() {
+      const name = document.getElementById('tool-name').value.trim();
+      const quantity = parseFloat(document.getElementById('tool-quantity').value) || 0;
+      const date = document.getElementById('tool-date').value;
+      const cost = parseFloat(document.getElementById('tool-cost').value) || 0;
+      
+      if (!name) {
+        showToast('Please enter tool name');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'tool',
+        tool_name: name,
+        tool_quantity: quantity,
+        purchase_date: date,
+        purchase_cost: cost
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('tool-name').value = '';
+        document.getElementById('tool-quantity').value = '';
+        document.getElementById('tool-cost').value = '';
+        showToast('Tool added successfully');
+      } else {
+        showToast('Failed to add tool');
+      }
+    }
+
+    async function deleteTool(id) {
+      const item = window.allData.find(d => d.__backendId === id);
+      if (!item) return;
+      
+      showDeleteConfirmation(`Delete ${item.tool_name}?`, async () => {
+        showLoading();
+        const result = await window.dataSdk.delete(item);
+        hideLoading();
+        
+        if (result.isOk) {
+          showToast('Tool deleted');
+        } else {
+          showToast('Failed to delete');
+        }
+      });
+    }
+
+    async function assignTool() {
+      const toolId = document.getElementById('assign-tool').value;
+      const workerId = document.getElementById('assign-worker').value;
+      const date = document.getElementById('assign-date').value;
+      
+      if (!toolId || !workerId) {
+        showToast('Please select tool and worker');
+        return;
+      }
+      
+      const tool = window.allData.find(d => d.__backendId === toolId);
+      const worker = window.allData.find(d => d.__backendId === workerId);
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'tool_assignment',
+        tool_name: tool.tool_name,
+        assigned_to: worker.name,
+        assigned_date: date
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('assign-tool').value = '';
+        document.getElementById('assign-worker').value = '';
+        showToast('Tool assigned successfully');
+      } else {
+        showToast('Failed to assign tool');
+      }
+    }
+
+    async function reassignTool(id) {
+      const assignment = window.allData.find(d => d.__backendId === id);
+      if (!assignment) return;
+      
+      const workers = window.allData.filter(d => d.type === 'worker');
+      if (workers.length === 0) {
+        showToast('No workers available');
+        return;
+      }
+      
+      const container = document.getElementById(`assignment-${id}`);
+      if (container) {
+        const existingSelect = container.querySelector('.reassign-select');
+        if (existingSelect) {
+          existingSelect.remove();
+          return;
+        }
+        
+        const selectDiv = document.createElement('div');
+        selectDiv.className = 'reassign-select flex gap-2 mt-2';
+        selectDiv.innerHTML = `
+          <select class="flex-1 px-2 py-1 border rounded-lg text-sm">
+            ${workers.map(w => `<option value="${w.__backendId}">${w.name}</option>`).join('')}
+          </select>
+          <button class="px-3 py-1 bg-indigo-500 text-white rounded-lg text-sm">Save</button>
+        `;
+        container.appendChild(selectDiv);
+        
+        selectDiv.querySelector('button').addEventListener('click', async () => {
+          const newWorkerId = selectDiv.querySelector('select').value;
+          const newWorker = workers.find(w => w.__backendId === newWorkerId);
+          
+          showLoading();
+          const result = await window.dataSdk.update({
+            ...assignment,
+            assigned_to: newWorker.name,
+            assigned_date: getToday()
+          });
+          hideLoading();
+          
+          if (result.isOk) {
+            showToast('Tool reassigned');
+          } else {
+            showToast('Failed to reassign');
+          }
+        });
+      }
+    }
+
+    async function addRental() {
+      const name = document.getElementById('rental-name').value.trim();
+      const quantity = parseFloat(document.getElementById('rental-quantity').value) || 0;
+      const rate = parseFloat(document.getElementById('rental-rate').value) || 0;
+      const date = document.getElementById('rental-date').value;
+      
+      if (!name || !date) {
+        showToast('Please enter rental name and date');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'rental',
+        rental_name: name,
+        rental_quantity: quantity,
+        daily_rate: rate,
+        borrowed_date: date,
+        is_given: false
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('rental-name').value = '';
+        document.getElementById('rental-quantity').value = '';
+        document.getElementById('rental-rate').value = '';
+        showToast('Rental added successfully');
+      } else {
+        showToast('Failed to add rental');
+      }
+    }
+
+    async function addGivenRental() {
+      const name = document.getElementById('given-name').value.trim();
+      const quantity = parseFloat(document.getElementById('given-quantity').value) || 0;
+      const client = document.getElementById('given-client').value.trim();
+      const rate = parseFloat(document.getElementById('given-rate').value) || 0;
+      const date = document.getElementById('given-date').value;
+      
+      if (!name || !client || !date) {
+        showToast('Please enter all required fields');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'rental',
+        rental_name: name,
+        rental_quantity: quantity,
+        client_name: client,
+        daily_rate: rate,
+        borrowed_date: date,
+        is_given: true
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('given-name').value = '';
+        document.getElementById('given-quantity').value = '';
+        document.getElementById('given-client').value = '';
+        document.getElementById('given-rate').value = '';
+        showToast('Rental added successfully');
+      } else {
+        showToast('Failed to add rental');
+      }
+    }
+
+    async function deleteRental(id) {
+      const item = window.allData.find(d => d.__backendId === id);
+      if (!item) return;
+      
+      showDeleteConfirmation(`Delete ${item.rental_name}?`, async () => {
+        showLoading();
+        const result = await window.dataSdk.delete(item);
+        hideLoading();
+        
+        if (result.isOk) {
+          showToast('Rental deleted');
+        } else {
+          showToast('Failed to delete');
+        }
+      });
+    }
+
+    async function addContractor() {
+      const name = document.getElementById('contractor-name').value.trim();
+      const type = document.getElementById('contractor-type').value;
+      const total = parseFloat(document.getElementById('contractor-total').value) || 0;
+      
+      if (!name) {
+        showToast('Please enter name');
+        return;
+      }
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'contractor',
+        contractor_name: name,
+        contractor_type: type,
+        total_contract: total
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        document.getElementById('contractor-name').value = '';
+        document.getElementById('contractor-type').value = 'Team';
+        document.getElementById('contractor-total').value = '';
+        showToast(`${type} added successfully`);
+      } else {
+        showToast(`Failed to add ${type.toLowerCase()}`);
+      }
+    }
+
+    async function deleteContractor(id) {
+      const item = window.allData.find(d => d.__backendId === id);
+      if (!item) return;
+      
+      const itemType = item.contractor_type || 'team';
+      showDeleteConfirmation(`Delete ${itemType.toLowerCase()} ${item.contractor_name}?`, async () => {
+        showLoading();
+        const result = await window.dataSdk.delete(item);
+        hideLoading();
+        
+        if (result.isOk) {
+          showToast(`${itemType} deleted`);
+        } else {
+          showToast('Failed to delete');
+        }
+      });
+    }
+
+    function openContractorPaymentModal(contractorId) {
+      selectedContractorId = contractorId;
+      const contractor = window.allData.find(d => d.__backendId === contractorId);
+      document.getElementById('contractor-modal-title').textContent = `Add Advance Payment - ${contractor.contractor_name}`;
+      document.getElementById('payment-date').valueAsDate = new Date();
+      document.getElementById('payment-amount').value = '';
+      document.getElementById('contractor-modal').classList.remove('hidden');
+    }
+
+    function closeContractorModal() {
+      document.getElementById('contractor-modal').classList.add('hidden');
+      selectedContractorId = null;
+    }
+
+    async function saveContractorPayment() {
+      const date = document.getElementById('payment-date').value;
+      const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+      
+      if (!amount || !selectedContractorId) {
+        showToast('Please enter payment amount');
+        return;
+      }
+      
+      const contractor = window.allData.find(d => d.__backendId === selectedContractorId);
+      
+      showLoading();
+      const result = await window.dataSdk.create({
+        type: 'contractor_payment',
+        contractor_name: contractor.contractor_name,
+        payment: amount,
+        date
+      });
+      hideLoading();
+      
+      if (result.isOk) {
+        closeContractorModal();
+        showToast('Payment added successfully');
+      } else {
+        showToast('Failed to add payment');
+      }
+    }
+
+    async function deleteContractorPayment(id) {
+      const item = window.allData.find(d => d.__backendId === id);
+      if (!item) return;
+      
+      showDeleteConfirmation('Delete this payment?', async () => {
+        showLoading();
+        const result = await window.dataSdk.delete(item);
+        hideLoading();
+        
+        if (result.isOk) {
+          showToast('Payment deleted');
+        } else {
+          showToast('Failed to delete');
+        }
+      });
+    }
+
+    // Attendance Functions
+    function openAttendanceModal(workerId, date) {
+      selectedWorkerId = workerId;
+      const worker = window.allData.find(d => d.__backendId === workerId);
+      
+      const rawAttendance = window.allData.filter(d => 
+        d.type === 'attendance' && 
+        d.name === worker.name && 
+        d.date === (date || getToday())
+      );
+      
+      let existingAttendance = null;
+      if (rawAttendance.length > 0) {
+        existingAttendance = rawAttendance.reduce((latest, current) => {
+          return current.__backendId > latest.__backendId ? current : latest;
+        });
+      }
+      
+      document.getElementById('modal-title').textContent = `Attendance - ${worker.name}`;
+      document.getElementById('modal-date').value = date || getToday();
+      document.getElementById('modal-hours').value = existingAttendance ? existingAttendance.hours : '';
+      document.getElementById('modal-advance').value = existingAttendance ? (existingAttendance.advance || '') : '';
+      document.getElementById('attendance-modal').classList.remove('hidden');
+    }
+
+    function closeAttendanceModal() {
+      document.getElementById('attendance-modal').classList.add('hidden');
+      selectedWorkerId = null;
+    }
+
+    async function saveAttendance() {
+      const date = document.getElementById('modal-date').value;
+      const hours = parseFloat(document.getElementById('modal-hours').value) || 0;
+      const advance = parseFloat(document.getElementById('modal-advance').value) || 0;
+      
+      if (!selectedWorkerId) {
+        showToast('Invalid worker selection');
+        return;
+      }
+      
+      if (hours < 0 || hours > 100) {
+        showToast('Hours must be between 0 and 100');
+        return;
+      }
+      
+      const worker = window.allData.find(d => d.__backendId === selectedWorkerId);
+      
+      const rawAttendance = window.allData.filter(d => 
+        d.type === 'attendance' && 
+        d.name === worker.name && 
+        d.date === date
+      );
+      
+      let existingAttendance = null;
+      if (rawAttendance.length > 0) {
+        existingAttendance = rawAttendance.reduce((latest, current) => {
+          return current.__backendId > latest.__backendId ? current : latest;
+        });
+      }
+      
+      showLoading();
+      let result;
+      
+      if (existingAttendance) {
+        result = await window.dataSdk.update({
+          ...existingAttendance,
+          hours,
+          advance,
+          payment: hours * worker.hourly_wage
+        });
+      } else {
+        result = await window.dataSdk.create({
+          type: 'attendance',
+          name: worker.name,
+          category: worker.category,
+          date,
+          hours,
+          advance,
+          payment: hours * worker.hourly_wage,
+          hourly_wage: worker.hourly_wage
+        });
+      }
+      hideLoading();
+      
+      if (result.isOk) {
+        closeAttendanceModal();
+        showToast('Attendance saved');
+      } else {
+        showToast('Failed to save attendance');
+      }
+    }
+
+    async function editWorkDone(category) {
+      const selectedDate = dailyReportDate.toISOString().split('T')[0];
+      
+      const rawTodayAttendance = window.allData.filter(d => d.type === 'attendance' && d.date === selectedDate && d.category === category);
+      
+      const uniqueTodayAttendance = {};
+      rawTodayAttendance.forEach(att => {
+        const key = att.name;
+        if (!uniqueTodayAttendance[key] || att.__backendId > uniqueTodayAttendance[key].__backendId) {
+          uniqueTodayAttendance[key] = att;
+        }
+      });
+      const categoryAttendance = Object.values(uniqueTodayAttendance);
+      
+      if (categoryAttendance.length === 0) {
+        showToast('No attendance records found');
+        return;
+      }
+      
+      const rowElement = document.querySelector(`[data-category="${category}"]`);
+      if (!rowElement) return;
+      
+      const workDoneCell = rowElement.querySelector('.work-done-cell');
+      const currentText = categoryAttendance[0].work_done || '';
+      
+      workDoneCell.innerHTML = `
+        <div class="flex gap-2 items-center">
+          <input type="text" class="flex-1 px-2 py-1 border border-indigo-300 rounded-lg text-sm" value="${currentText}" id="work-input-${category}">
+          <button onclick="saveWorkDone('${category}')" class="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-medium hover:bg-emerald-600">
+            Save
+          </button>
+          <button onclick="updateDailyReport()" class="px-3 py-1 bg-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-400">
+            Cancel
+          </button>
+        </div>
+      `;
+      
+      document.getElementById(`work-input-${category}`).focus();
+    }
+    
+    async function saveWorkDone(category) {
+      const selectedDate = dailyReportDate.toISOString().split('T')[0];
+      const inputElement = document.getElementById(`work-input-${category}`);
+      
+      if (!inputElement) return;
+      
+      const workDoneText = inputElement.value.trim();
+      
+      const rawTodayAttendance = window.allData.filter(d => d.type === 'attendance' && d.date === selectedDate && d.category === category);
+      
+      const uniqueTodayAttendance = {};
+      rawTodayAttendance.forEach(att => {
+        const key = att.name;
+        if (!uniqueTodayAttendance[key] || att.__backendId > uniqueTodayAttendance[key].__backendId) {
+          uniqueTodayAttendance[key] = att;
+        }
+      });
+      const categoryAttendance = Object.values(uniqueTodayAttendance);
+      
+      if (categoryAttendance.length === 0) {
+        showToast('No attendance records to update');
+        return;
+      }
+      
+      showLoading();
+      let successCount = 0;
+      
+      for (const att of categoryAttendance) {
+        const result = await window.dataSdk.update({
+          ...att,
+          work_done: workDoneText
+        });
+        if (result.isOk) {
+          successCount++;
+        }
+      }
+      
+      hideLoading();
+      
+      if (successCount === categoryAttendance.length) {
+        showToast(`Work description saved for ${category}!`);
+        updateDailyReport();
+      } else if (successCount > 0) {
+        showToast(`${successCount} of ${categoryAttendance.length} saved`);
+        updateDailyReport();
+      } else {
+        showToast('Failed to save work description');
+      }
+    }
+
+    // Update Views
+    function updateDashboard() {
+      const currentMonth = getCurrentMonth();
+      const today = getToday();
+      
+      const monthAttendance = window.allData.filter(d => d.type === 'attendance' && d.date && d.date.startsWith(currentMonth));
+      
+      const uniqueMonthAttendance = {};
+      monthAttendance.forEach(att => {
+        const key = `${att.name}_${att.date}`;
+        if (!uniqueMonthAttendance[key] || att.__backendId > uniqueMonthAttendance[key].__backendId) {
+          uniqueMonthAttendance[key] = att;
+        }
+      });
+      const uniqueAttendanceRecords = Object.values(uniqueMonthAttendance);
+      
+      const workersPaymentsThisMonth = uniqueAttendanceRecords.reduce((sum, att) => {
+        const hours = parseFloat(att.hours) || 0;
+        const wage = parseFloat(att.hourly_wage) || 0;
+        return sum + (hours * wage);
+      }, 0);
+      
+      const contractorContracts = window.allData
+        .filter(d => d.type === 'contractor')
+        .reduce((sum, c) => sum + (parseFloat(c.total_contract) || 0), 0);
+      
+      const totalPaymentThisMonth = workersPaymentsThisMonth + contractorContracts;
+      
+      const workerAdvancesThisMonth = uniqueAttendanceRecords.reduce((sum, att) => sum + (parseFloat(att.advance) || 0), 0);
+      
+      const contractorAdvancesThisMonth = window.allData
+        .filter(d => d.type === 'contractor_payment' && d.date && d.date.startsWith(currentMonth))
+        .reduce((sum, d) => sum + (parseFloat(d.payment) || 0), 0);
+      
+      const totalAdvancesThisMonth = workerAdvancesThisMonth + contractorAdvancesThisMonth;
+      
+      const remaining = Math.max(0, totalPaymentThisMonth - totalAdvancesThisMonth);
+      
+      const materialCostsThisMonth = window.allData
+        .filter(d => d.type === 'material' && !d.is_petty_cash && d.date && d.date.startsWith(currentMonth))
+        .reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
+      
+      const pettyCashDeposited = window.allData
+        .filter(d => d.type === 'material' && d.is_petty_cash)
+        .reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
+      
+      const pettyCashSpent = window.allData
+        .filter(d => d.type === 'material' && !d.is_petty_cash)
+        .reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
+      
+      const pettyCashRemaining = pettyCashDeposited - pettyCashSpent;
+      
+      const rentalExpenses = window.allData
+        .filter(d => d.type === 'rental' && !d.is_given)
+        .reduce((sum, d) => {
+          const days = daysBetween(d.borrowed_date, today);
+          const rate = parseFloat(d.daily_rate) || 0;
+          const qty = parseFloat(d.rental_quantity) || 1;
+          return sum + (days * rate * qty);
+        }, 0);
+      
+      const rentalIncome = window.allData
+        .filter(d => d.type === 'rental' && d.is_given)
+        .reduce((sum, d) => {
+          const days = daysBetween(d.borrowed_date, today);
+          const rate = parseFloat(d.daily_rate) || 0;
+          const qty = parseFloat(d.rental_quantity) || 1;
+          return sum + (days * rate * qty);
+        }, 0);
+      
+      const allAttendance = window.allData.filter(d => d.type === 'attendance');
+      const uniqueAllAttendance = {};
+      allAttendance.forEach(att => {
+        const key = `${att.name}_${att.date}`;
+        if (!uniqueAllAttendance[key] || att.__backendId > uniqueAllAttendance[key].__backendId) {
+          uniqueAllAttendance[key] = att;
+        }
+      });
+      const allUniqueAttendanceRecords = Object.values(uniqueAllAttendance);
+      
+      const totalWorkerPaymentsAllTime = allUniqueAttendanceRecords.reduce((sum, att) => {
+        const hours = parseFloat(att.hours) || 0;
+        const wage = parseFloat(att.hourly_wage) || 0;
+        return sum + (hours * wage);
+      }, 0);
+      
+      const totalMaterialCostsAllTime = window.allData
+        .filter(d => d.type === 'material' && !d.is_petty_cash)
+        .reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
+      
+      const totalSpends = totalWorkerPaymentsAllTime + totalMaterialCostsAllTime + rentalExpenses;
+      
+      document.getElementById('dash-advance').textContent = formatCurrency(totalAdvancesThisMonth);
+      document.getElementById('dash-remaining').textContent = formatCurrency(remaining);
+      document.getElementById('dash-material').textContent = formatCurrency(materialCostsThisMonth);
+      document.getElementById('dash-petty').textContent = formatCurrency(pettyCashDeposited);
+      document.getElementById('dash-petty-remaining').textContent = formatCurrency(pettyCashRemaining);
+      document.getElementById('dash-rental-out').textContent = formatCurrency(rentalExpenses);
+      document.getElementById('dash-rental-in').textContent = formatCurrency(rentalIncome);
+      document.getElementById('header-spends').textContent = formatCurrency(totalSpends);
+      
+      updateTeamDetails();
+    }
+    
+    function updateTeamDetails() {
+      const currentMonth = getCurrentMonth();
+      const contractors = window.allData.filter(d => d.type === 'contractor');
+      const teamDetailsDiv = document.getElementById('team-details');
+      
+      if (contractors.length === 0) {
+        teamDetailsDiv.innerHTML = '<p class="text-gray-400 text-center py-4">No teams added yet</p>';
+        return;
+      }
+      
+      const teamsData = contractors.map(c => {
+        const teamWorkers = window.allData.filter(d => d.type === 'worker' && d.team_name === c.contractor_name);
+        
+        const teamAttendance = window.allData.filter(d => 
+          d.type === 'attendance' && 
+          d.date && d.date.startsWith(currentMonth) &&
+          teamWorkers.some(w => w.name === d.name)
+        );
+        
+        const uniqueTeamAttendance = {};
+        teamAttendance.forEach(att => {
+          const key = `${att.name}_${att.date}`;
+          if (!uniqueTeamAttendance[key] || att.__backendId > uniqueTeamAttendance[key].__backendId) {
+            uniqueTeamAttendance[key] = att;
+          }
+        });
+        const uniqueAttendanceRecords = Object.values(uniqueTeamAttendance);
+        
+        const teamPaymentFromWork = uniqueAttendanceRecords.reduce((sum, att) => {
+          const hours = parseFloat(att.hours) || 0;
+          const wage = parseFloat(att.hourly_wage) || 0;
+          return sum + (hours * wage);
+        }, 0);
+        
+        const teamAdvancesFromWork = uniqueAttendanceRecords.reduce((sum, a) => sum + (parseFloat(a.advance) || 0), 0);
+        
+        const teamDirectPayments = window.allData
+          .filter(d => d.type === 'contractor_payment' && d.contractor_name === c.contractor_name && d.date && d.date.startsWith(currentMonth))
+          .reduce((sum, p) => sum + (parseFloat(p.payment) || 0), 0);
+        
+        const totalPaid = teamPaymentFromWork + (parseFloat(c.total_contract) || 0);
+        const totalAdvance = teamAdvancesFromWork + teamDirectPayments;
+        const balance = totalPaid - totalAdvance;
+        
+        return {
+          name: c.contractor_name,
+          workers: teamWorkers.length,
+          totalPaid,
+          totalAdvance,
+          balance
+        };
+      });
+      
+      teamDetailsDiv.innerHTML = teamsData.map(t => `
+        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="font-bold text-gray-800 text-base">${t.name}</h4>
+              <p class="text-xs text-gray-600">${t.workers} worker${t.workers !== 1 ? 's' : ''}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-gray-600">Balance</p>
+              <p class="text-lg font-bold ${t.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatCurrency(t.balance)}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <div class="bg-white rounded-lg p-1.5">
+              <p class="text-[10px] text-blue-600">Payment</p>
+              <p class="font-bold text-sm text-blue-700">${formatCurrency(t.totalPaid)}</p>
+            </div>
+            <div class="bg-white rounded-lg p-1.5">
+              <p class="text-[10px] text-amber-600">Advances</p>
+              <p class="font-bold text-sm text-amber-700">${formatCurrency(t.totalAdvance)}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateDailyReport() {
+      const selectedDate = dailyReportDate.toISOString().split('T')[0];
+      
+      const rawTodayAttendance = window.allData.filter(d => d.type === 'attendance' && d.date === selectedDate);
+      
+      const uniqueTodayAttendance = {};
+      rawTodayAttendance.forEach(att => {
+        const key = att.name;
+        if (!uniqueTodayAttendance[key] || att.__backendId > uniqueTodayAttendance[key].__backendId) {
+          uniqueTodayAttendance[key] = att;
+        }
+      });
+      const todayAttendance = Object.values(uniqueTodayAttendance);
+      
+      const workerAdvancesToday = todayAttendance.reduce((sum, d) => sum + (parseFloat(d.advance) || 0), 0);
+      
+      const teamPaymentsToday = window.allData
+        .filter(d => d.type === 'contractor_payment' && d.date === selectedDate)
+        .reduce((sum, d) => sum + (parseFloat(d.payment) || 0), 0);
+      
+      const todayAdvances = workerAdvancesToday + teamPaymentsToday;
+      
+      const todayMaterial = window.allData
+        .filter(d => d.type === 'material' && d.date === selectedDate && !d.is_petty_cash)
+        .reduce((sum, d) => sum + (parseFloat(d.cost) || 0), 0);
+      
+      const todayMaterials = window.allData
+        .filter(d => d.type === 'material' && d.date === selectedDate && !d.is_petty_cash);
+      
+      const materialsTable = document.getElementById('daily-materials-table');
+      if (todayMaterials.length === 0) {
+        materialsTable.innerHTML = '<tr><td colspan="3" class="px-3 py-4 text-center text-gray-400">No materials purchased</td></tr>';
+      } else {
+        materialsTable.innerHTML = todayMaterials.map(m => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 font-medium text-gray-700">${m.material_name}</td>
+            <td class="px-3 py-2 text-center">${m.quantity || '-'}</td>
+            <td class="px-3 py-2 text-right font-medium">${formatCurrency(m.cost)}</td>
+          </tr>
+        `).join('');
+      }
+      
+      document.getElementById('daily-payments').textContent = formatCurrency(todayAdvances);
+      document.getElementById('daily-material').textContent = formatCurrency(todayMaterial);
+      
+      const labourTable = document.getElementById('daily-labour-table');
+      if (todayAttendance.length === 0) {
+        labourTable.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-400">No attendance recorded today</td></tr>';
+      } else {
+        const categoryGroups = {};
+        todayAttendance.forEach(att => {
+          if (!categoryGroups[att.category]) {
+            categoryGroups[att.category] = [];
+          }
+          categoryGroups[att.category].push(att);
+        });
+        
+        const categoryOrder = ['Mason', 'Labour', 'Carpenter', 'Helper', 'Fitter', 'Fitter Helper', 'Supervisor'];
+        const sortedCategories = Object.keys(categoryGroups).sort((a, b) => {
+          const aIndex = categoryOrder.indexOf(a);
+          const bIndex = categoryOrder.indexOf(b);
+          return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+        });
+        
+        let rows = [];
+        
+        sortedCategories.forEach(category => {
+          const workers = categoryGroups[category];
+          const totalCategoryHours = workers.reduce((sum, w) => sum + (parseFloat(w.hours) || 0), 0);
+          
+          const workDone = workers[0].work_done || '-';
+          
+          rows.push(`
+            <tr class="hover:bg-gray-50" data-category="${category}">
+              <td class="px-3 py-2 font-bold text-gray-800">${category}</td>
+              <td class="px-3 py-2 text-center font-bold text-indigo-600">${workers.length}</td>
+              <td class="px-3 py-2 text-center font-bold text-gray-800">${totalCategoryHours.toFixed(1)}h</td>
+              <td class="px-3 py-2 text-gray-700 work-done-cell">${workDone}</td>
+              <td class="px-3 py-2 text-center">
+                <button onclick="editWorkDone('${category}')" class="px-3 py-1 bg-indigo-100 text-indigo-600 hover:bg-indigo-200 rounded-lg text-sm font-medium transition-colors">
+                  Edit
+                </button>
+              </td>
+            </tr>
+          `);
+        });
+        
+        labourTable.innerHTML = rows.join('');
+      }
+    }
+
+    function updateWorkersList() {
+      const workers = window.allData.filter(d => d.type === 'worker');
+      const workersList = document.getElementById('workers-list');
+      
+      if (workers.length === 0) {
+        workersList.innerHTML = '<p class="text-gray-400 text-center py-4">No workers added yet</p>';
+        return;
+      }
+      
+      const categoryOrder = ['Mason', 'Labour', 'Carpenter', 'Helper', 'Fitter', 'Fitter Helper', 'Supervisor', 'Engineer' ];
+      const grouped = {};
+      
+      workers.forEach(w => {
+        if (!grouped[w.category]) grouped[w.category] = [];
+        grouped[w.category].push(w);
+      });
+      
+      const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        const aIndex = categoryOrder.indexOf(a);
+        const bIndex = categoryOrder.indexOf(b);
+        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      });
+      
+      workersList.innerHTML = sortedCategories.map(cat => {
+        const catWorkers = grouped[cat];
+        return `
+          <div class="mb-4">
+            <h4 class="text-sm font-bold text-indigo-600 mb-2 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+              ${cat} (${catWorkers.length})
+            </h4>
+            <div class="space-y-2">
+              ${catWorkers.map(worker => {
+                const attendance = window.allData.filter(d => d.type === 'attendance' && d.name === worker.name);
+                
+                const currentMonth = getCurrentMonth();
+                const monthAttendance = attendance.filter(a => a.date && a.date.startsWith(currentMonth));
+                
+                const attendanceByDate = {};
+                monthAttendance.forEach(a => {
+                  if (a.date) {
+                    if (!attendanceByDate[a.date] || a.__backendId > attendanceByDate[a.date].__backendId) {
+                      attendanceByDate[a.date] = a;
+                    }
+                  }
+                });
+                
+                const uniqueAttendance = Object.values(attendanceByDate);
+                const totalDays = uniqueAttendance.filter(a => parseFloat(a.hours) > 0).length;
+                
+                const totalHours = uniqueAttendance.reduce((sum, a) => sum + (parseFloat(a.hours) || 0), 0);
+                
+                const totalAdvances = uniqueAttendance.reduce((sum, a) => sum + (parseFloat(a.advance) || 0), 0);
+                
+                const totalPayment = uniqueAttendance.reduce((sum, a) => {
+                  const hours = parseFloat(a.hours) || 0;
+                  const wage = parseFloat(a.hourly_wage) || 0;
+                  return sum + (hours * wage);
+                }, 0);
+                
+                return `
+                  <div class="bg-gray-50 rounded-xl p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                          ${worker.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p class="font-medium text-gray-800">${worker.name}</p>
+                          <p class="text-xs text-gray-500">${formatCurrency(worker.hourly_wage)}/hr${worker.team_name ? ' • ' + worker.team_name : ''}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button onclick="toggleWorkerCalendar('${worker.__backendId}')" class="px-3 py-1 bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors">
+                          📅 Calendar
+                        </button>
+                        <button onclick="deleteWorker('${worker.__backendId}')" class="px-3 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-lg text-sm font-medium transition-colors">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 mt-3 text-center">
+                      <div class="bg-white rounded-lg p-2">
+                        <p class="text-xs text-gray-500">Days</p>
+                        <p class="font-bold text-gray-800">${totalDays}</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2">
+                        <p class="text-xs text-gray-500">Hours</p>
+                        <p class="font-bold text-gray-800">${totalHours.toFixed(1)}</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2">
+                        <p class="text-xs text-gray-500">Advances</p>
+                        <p class="font-bold text-amber-600">${formatCurrency(totalAdvances)}</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2">
+                        <p class="text-xs text-gray-500">Payment</p>
+                        <p class="font-bold text-emerald-600">${formatCurrency(totalPayment)}</p>
+                      </div>
+                    </div>
+                    <div id="calendar-${worker.__backendId}" class="expand-content mt-3">
+                      <div id="calendar-content-${worker.__backendId}">
+                        ${renderWorkerCalendar(worker, new Date())}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleWorkerCalendar(workerId) {
+      const calendar = document.getElementById(`calendar-${workerId}`);
+      if (calendar) {
+        calendar.classList.toggle('expanded');
+      }
+    }
+
+    function renderWorkerCalendar(worker, viewDate) {
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      const monthString = `${year}-${String(month + 1).padStart(2, '0')}`;
+      
+      const attendance = window.allData.filter(d => d.type === 'attendance' && d.name === worker.name && d.date && d.date.startsWith(monthString));
+      
+      const attendanceByDate = {};
+      attendance.forEach(a => {
+        if (a.date) {
+          if (!attendanceByDate[a.date] || a.__backendId > attendanceByDate[a.date].__backendId) {
+            attendanceByDate[a.date] = a;
+          }
+        }
+      });
+      
+      const uniqueAttendance = Object.values(attendanceByDate);
+      const totalDays = uniqueAttendance.filter(a => parseFloat(a.hours) > 0).length;
+      
+      const totalHours = uniqueAttendance.reduce((sum, a) => sum + (parseFloat(a.hours) || 0), 0);
+      const totalAdvances = uniqueAttendance.reduce((sum, a) => sum + (parseFloat(a.advance) || 0), 0);
+      
+      const totalPayment = uniqueAttendance.reduce((sum, a) => {
+        const hours = parseFloat(a.hours) || 0;
+        const wage = parseFloat(a.hourly_wage) || 0;
+        return sum + (hours * wage);
+      }, 0);
+      
+      const attendanceMap = attendanceByDate;
+      
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+      
+      let html = `
+        <div class="bg-white rounded-xl p-3">
+          <div class="flex items-center justify-between mb-3">
+            <button onclick="changeWorkerCalendarMonth('${worker.__backendId}', -1, ${year}, ${month})" class="px-3 py-1 bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-200">
+              ← Prev
+            </button>
+            <p class="font-bold text-gray-700">${monthNames[month]} ${year}</p>
+            <button onclick="changeWorkerCalendarMonth('${worker.__backendId}', 1, ${year}, ${month})" class="px-3 py-1 bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-200">
+              Next →
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-4 gap-2 mb-3">
+            <div class="bg-blue-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-blue-600">Days</p>
+              <p class="font-bold text-blue-700">${totalDays}</p>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-purple-600">Hours</p>
+              <p class="font-bold text-purple-700">${totalHours.toFixed(1)}</p>
+            </div>
+            <div class="bg-amber-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-amber-600">Advances</p>
+              <p class="font-bold text-amber-700">${formatCurrency(totalAdvances)}</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-2 text-center">
+              <p class="text-xs text-emerald-600">Payment</p>
+              <p class="font-bold text-emerald-700">${formatCurrency(totalPayment)}</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-7 gap-1 text-center text-xs mb-3">
+            ${dayNames.map(d => `<div class="font-medium text-gray-400 mb-1">${d}</div>`).join('')}
+            ${Array(firstDay).fill('<div class="h-14"></div>').join('')}
+            ${Array.from({ length: daysInMonth }, (_, i) => {
+              const day = i + 1;
+              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const att = attendanceMap[dateStr];
+              const isToday = dateStr === getToday();
+              const isPast = new Date(dateStr) < new Date(getToday());
+              const hasZeroHours = att && parseFloat(att.hours) === 0;
+              
+              let bgColor = '';
+              if (att) {
+                if (hasZeroHours) {
+                  bgColor = 'bg-rose-100 text-rose-600 hover:bg-rose-200';
+                } else {
+                  bgColor = 'bg-emerald-500 text-white';
+                }
+              } else if (isToday) {
+                bgColor = 'bg-indigo-100 text-indigo-600';
+              } else if (isPast) {
+                bgColor = 'bg-rose-100 text-rose-600 hover:bg-rose-200';
+              } else {
+                bgColor = 'hover:bg-gray-100';
+              }
+              
+              return `
+                <div 
+                  onclick="openAttendanceModal('${worker.__backendId}', '${dateStr}')"
+                  class="calendar-day flex flex-col items-center justify-center rounded-lg cursor-pointer p-1
+                    ${bgColor}
+                    ${att ? 'font-bold' : ''}"
+                  title="${att ? `${att.hours}h - ${formatCurrency((parseFloat(att.hours) || 0) * (parseFloat(att.hourly_wage) || 0))}${att.advance ? ' - Advance: ' + formatCurrency(att.advance) : ''}` : isPast ? 'No attendance recorded' : 'Click to add'}"
+                >
+                  <div class="text-xs">${day}</div>
+                  ${att ? `
+                    <div class="text-[9px] leading-tight mt-0.5">
+                      <div>${parseFloat(att.hours).toFixed(1)}h</div>
+                      ${att.advance ? `<div class="${hasZeroHours ? 'text-amber-200' : 'text-amber-200'}">₹${parseFloat(att.advance)}</div>` : ''}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+      
+      return html;
+    }
+
+    function updateMaterialsTable() {
+      const materials = window.allData.filter(d => d.type === 'material');
+      const table = document.getElementById('materials-table');
+      
+      const totalMaterial = materials.filter(m => !m.is_petty_cash).reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
+      const totalPetty = materials.filter(m => m.is_petty_cash).reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
+      const remainingPetty = totalPetty - totalMaterial;
+      
+      document.getElementById('total-material-cost').textContent = formatCurrency(totalMaterial);
+      document.getElementById('total-petty-cash').textContent = formatCurrency(totalPetty);
+      document.getElementById('remaining-petty-cash').textContent = formatCurrency(remainingPetty);
+      
+      if (materials.length === 0) {
+        table.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-400">No materials added yet</td></tr>';
+        return;
+      }
+      
+      table.innerHTML = materials.sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(m => `
+        <tr class="hover:bg-gray-50 ${m.is_petty_cash ? 'bg-cyan-50' : ''}">
+          <td class="px-3 py-2 text-gray-600">${m.date || '-'}</td>
+          <td class="px-3 py-2 font-medium text-gray-700">
+            ${m.material_name}
+            ${m.is_petty_cash ? '<span class="ml-1 text-xs bg-cyan-100 text-cyan-600 px-2 py-0.5 rounded-full">Petty Cash</span>' : ''}
+          </td>
+          <td class="px-3 py-2 text-center">${m.quantity || '-'}</td>
+          <td class="px-3 py-2 text-right font-medium">${formatCurrency(m.cost)}</td>
+          <td class="px-3 py-2 text-center">
+            <button onclick="deleteMaterial('${m.__backendId}')" class="px-3 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-lg transition-colors text-sm font-medium">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateToolsTable() {
+      const tools = window.allData.filter(d => d.type === 'tool');
+      const table = document.getElementById('tools-table');
+      
+      if (tools.length === 0) {
+        table.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-400">No tools added yet</td></tr>';
+      } else {
+        table.innerHTML = tools.map(t => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 font-medium text-gray-700">${t.tool_name}</td>
+            <td class="px-3 py-2 text-center">${t.tool_quantity || 1}</td>
+            <td class="px-3 py-2 text-center text-gray-600">${t.purchase_date || '-'}</td>
+            <td class="px-3 py-2 text-right">${t.purchase_cost ? formatCurrency(t.purchase_cost) : '-'}</td>
+            <td class="px-3 py-2 text-center">
+              <button onclick="deleteTool('${t.__backendId}')" class="px-3 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-lg transition-colors text-sm font-medium">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+      
+      const assignments = window.allData.filter(d => d.type === 'tool_assignment');
+      const assignmentsDiv = document.getElementById('tool-assignments');
+      
+      if (assignments.length === 0) {
+        assignmentsDiv.innerHTML = '<p class="text-gray-400 text-center py-4">No tool assignments</p>';
+      } else {
+        assignmentsDiv.innerHTML = assignments.map(a => `
+          <div id="assignment-${a.__backendId}" class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div>
+              <p class="font-medium text-gray-700">${a.tool_name}</p>
+              <p class="text-sm text-gray-500">Assigned to: ${a.assigned_to} • ${a.assigned_date}</p>
+            </div>
+            <button onclick="reassignTool('${a.__backendId}')" class="px-3 py-1 bg-indigo-100 text-indigo-600 rounded-lg text-sm font-medium">
+              Reassign
+            </button>
+          </div>
+        `).join('');
+      }
+    }
+
+    function updateRentalsTable() {
+      const today = getToday();
+      
+      const borrowed = window.allData.filter(d => d.type === 'rental' && !d.is_given);
+      const borrowedTable = document.getElementById('rentals-borrowed-table');
+      let totalExpense = 0;
+      
+      if (borrowed.length === 0) {
+        borrowedTable.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-center text-gray-400">No rentals yet</td></tr>';
+      } else {
+        borrowedTable.innerHTML = borrowed.map(r => {
+          const days = daysBetween(r.borrowed_date, today);
+          const rate = parseFloat(r.daily_rate) || 0;
+          const qty = parseFloat(r.rental_quantity) || 1;
+          const total = days * rate * qty;
+          totalExpense += total;
+          return `
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2 font-medium text-gray-700">${r.rental_name}</td>
+              <td class="px-3 py-2 text-center">${r.rental_quantity || 1}</td>
+              <td class="px-3 py-2 text-center text-gray-600">${r.borrowed_date}</td>
+              <td class="px-3 py-2 text-center">${days}</td>
+              <td class="px-3 py-2 text-right font-medium text-rose-600">${formatCurrency(total)}</td>
+              <td class="px-3 py-2 text-center">
+                <button onclick="deleteRental('${r.__backendId}')" class="px-3 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-lg transition-colors text-sm font-medium">Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+      document.getElementById('total-rental-expense').textContent = formatCurrency(totalExpense);
+      
+      const given = window.allData.filter(d => d.type === 'rental' && d.is_given);
+      const givenTable = document.getElementById('rentals-given-table');
+      let totalIncome = 0;
+      
+      if (given.length === 0) {
+        givenTable.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-gray-400">No rentals given yet</td></tr>';
+      } else {
+        givenTable.innerHTML = given.map(r => {
+          const days = daysBetween(r.borrowed_date, today);
+          const rate = parseFloat(r.daily_rate) || 0;
+          const qty = parseFloat(r.rental_quantity) || 1;
+          const total = days * rate * qty;
+          totalIncome += total;
+          return `
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2 font-medium text-gray-700">${r.rental_name}</td>
+              <td class="px-3 py-2 text-center">${r.rental_quantity || 1}</td>
+              <td class="px-3 py-2 text-gray-600">${r.client_name || '-'}</td>
+              <td class="px-3 py-2 text-center text-gray-600">${r.borrowed_date}</td>
+              <td class="px-3 py-2 text-center">${days}</td>
+              <td class="px-3 py-2 text-right font-medium text-emerald-600">${formatCurrency(total)}</td>
+              <td class="px-3 py-2 text-center">
+                <button onclick="deleteRental('${r.__backendId}')" class="px-3 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-lg transition-colors text-sm font-medium">Delete</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+      document.getElementById('total-rental-income').textContent = formatCurrency(totalIncome);
+    }
+
+    function updateContractorsList() {
+      const contractors = window.allData.filter(d => d.type === 'contractor');
+      const list = document.getElementById('contractors-list');
+      
+      document.getElementById('current-period-teams').textContent = formatMonthYear(currentViewMonth);
+      const viewMonthString = getMonthString(currentViewMonth);
+      
+      if (contractors.length === 0) {
+        list.innerHTML = '<p class="text-white/50 text-center py-4">No contractors/staff added yet</p>';
+        return;
+      }
+      
+      list.innerHTML = contractors.map(c => {
+        const teamWorkers = window.allData.filter(d => d.type === 'worker' && d.team_name === c.contractor_name);
+        
+        const teamAttendance = window.allData.filter(d => 
+          d.type === 'attendance' && 
+          d.date && d.date.startsWith(viewMonthString) &&
+          teamWorkers.some(w => w.name === d.name)
+        );
+        
+        const uniqueTeamAttendance = {};
+        teamAttendance.forEach(att => {
+          const key = `${att.name}_${att.date}`;
+          if (!uniqueTeamAttendance[key] || att.__backendId > uniqueTeamAttendance[key].__backendId) {
+            uniqueTeamAttendance[key] = att;
+          }
+        });
+        const uniqueAttendanceRecords = Object.values(uniqueTeamAttendance);
+        
+        const teamPaymentFromWork = uniqueAttendanceRecords.reduce((sum, att) => {
+          const hours = parseFloat(att.hours) || 0;
+          const wage = parseFloat(att.hourly_wage) || 0;
+          return sum + (hours * wage);
+        }, 0);
+        
+        const workerAdvances = uniqueAttendanceRecords.reduce((sum, a) => sum + (parseFloat(a.advance) || 0), 0);
+        
+        const payments = window.allData.filter(d => 
+          d.type === 'contractor_payment' && 
+          d.contractor_name === c.contractor_name &&
+          d.date && d.date.startsWith(viewMonthString)
+        );
+        const teamPaymentsAsAdvances = payments.reduce((sum, p) => sum + (parseFloat(p.payment) || 0), 0);
+        
+        const totalPaid = teamPaymentFromWork + (parseFloat(c.total_contract) || 0);
+        const totalAdvance = workerAdvances + teamPaymentsAsAdvances;
+        const balance = totalPaid - totalAdvance;
+        
+        return `
+          <div class="glass-effect rounded-2xl p-4 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+                  ${c.contractor_name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-800">${c.contractor_name}</h4>
+                  <p class="text-sm text-gray-500">${c.contractor_type || 'Team'} • Balance: ${formatCurrency(balance)}</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="openContractorPaymentModal('${c.__backendId}')" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
+                  + Add Payment
+                </button>
+                <button onclick="deleteContractor('${c.__backendId}')" class="px-4 py-2 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-xl text-sm font-medium transition-all">
+                  Delete
+                </button>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3">
+                <p class="text-xs text-indigo-600">Total Payment (${formatMonthYear(currentViewMonth)})</p>
+                <p class="text-lg font-bold text-indigo-700">${formatCurrency(totalPaid)}</p>
+                <p class="text-xs text-indigo-500 mt-1">${teamWorkers.length} workers</p>
+              </div>
+              <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3">
+                <p class="text-xs text-amber-600">Advances Given</p>
+                <p class="text-lg font-bold text-amber-700">${formatCurrency(totalAdvance)}</p>
+              </div>
+              <div class="bg-gradient-to-br from-${balance >= 0 ? 'emerald' : 'rose'}-50 to-${balance >= 0 ? 'teal' : 'pink'}-50 rounded-xl p-3">
+                <p class="text-xs text-${balance >= 0 ? 'emerald' : 'rose'}-600">Net Balance</p>
+                <p class="text-lg font-bold text-${balance >= 0 ? 'emerald' : 'rose'}-700">${formatCurrency(balance)}</p>
+              </div>
+            </div>
+            
+            ${teamWorkers.length > 0 ? `
+              <div class="bg-gray-50 rounded-xl p-3 mb-3">
+                <p class="text-sm font-medium text-gray-600 mb-2">Team Members</p>
+                <div class="grid grid-cols-2 gap-2">
+                  ${teamWorkers.map(w => `
+                    <div class="bg-white rounded-lg p-2 text-sm">
+                      <p class="font-medium text-gray-700">${w.name}</p>
+                      <p class="text-xs text-gray-500">${w.category} • ${formatCurrency(w.hourly_wage)}/hr</p>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${payments.length > 0 ? `
+              <div class="bg-gray-50 rounded-xl p-3">
+                <p class="text-sm font-medium text-gray-600 mb-2">Payment History</p>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b border-gray-200">
+                        <th class="text-left py-2 text-gray-600">Date</th>
+                        <th class="text-right py-2 text-gray-600">Amount</th>
+                        <th class="text-center py-2 text-gray-600">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${payments.sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(p => `
+                        <tr class="border-b border-gray-100">
+                          <td class="py-2 text-gray-700">${p.date}</td>
+                          <td class="py-2 text-right font-medium text-gray-800">${formatCurrency(p.payment)}</td>
+                          <td class="py-2 text-center">
+                            <button onclick="deleteContractorPayment('${p.__backendId}')" class="px-3 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-lg transition-colors text-sm font-medium">Delete</button>
+                          </td>
+                        </tr>
+                      `).join('')}
+                      <tr class="font-bold border-t-2 border-gray-300">
+                        <td class="py-2 text-gray-800">Total Payment</td>
+                        <td class="py-2 text-right text-indigo-700">${formatCurrency(totalPaid)}</td>
+                        <td></td>
+                      </tr>
+                      <tr class="font-bold">
+                        <td class="py-2 text-gray-800">Total Advances</td>
+                        <td class="py-2 text-right text-amber-700">${formatCurrency(totalAdvance)}</td>
+                        <td></td>
+                      </tr>
+                      <tr class="font-bold border-t-2 border-gray-300">
+                        <td class="py-2 text-gray-800">Balance</td>
+                        <td class="py-2 text-right text-${balance >= 0 ? 'emerald' : 'rose'}-700">${formatCurrency(balance)}</td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ` : '<p class="text-gray-400 text-center text-sm">No payments recorded</p>'}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateDropdowns() {
+      const tools = window.allData.filter(d => d.type === 'tool');
+      const toolSelect = document.getElementById('assign-tool');
+      toolSelect.innerHTML = '<option value="">Select Tool</option>' + 
+        tools.map(t => `<option value="${t.__backendId}">${t.tool_name}</option>`).join('');
+      
+      const workers = window.allData.filter(d => d.type === 'worker');
+      const workerSelect = document.getElementById('assign-worker');
+      workerSelect.innerHTML = '<option value="">Select Worker</option>' + 
+        workers.map(w => `<option value="${w.__backendId}">${w.name} (${w.category})</option>`).join('');
+      
+      const teams = window.allData.filter(d => d.type === 'contractor');
+      const teamSelect = document.getElementById('worker-team-select');
+      teamSelect.innerHTML = '<option value="">Select Team</option>' + 
+        teams.map(t => `<option value="${t.contractor_name}">${t.contractor_name}</option>`).join('');
+    }
+
+    // Make functions globally accessible
+    window.editWorkDone = editWorkDone;
+    window.saveWorkDone = saveWorkDone;
+    window.openAttendanceModal = openAttendanceModal;
+    window.toggleWorkerCalendar = toggleWorkerCalendar;
+    window.changeWorkerCalendarMonth = function(workerId, delta, currentYear, currentMonth) {
+      const worker = window.allData.find(d => d.__backendId === workerId);
+      if (!worker) return;
+      
+      const newDate = new Date(currentYear, currentMonth + delta, 1);
+      const calendarContent = document.getElementById(`calendar-content-${workerId}`);
+      if (calendarContent) {
+        calendarContent.innerHTML = renderWorkerCalendar(worker, newDate);
+      }
+    };
+    window.deleteWorker = deleteWorker;
+    window.deleteMaterial = deleteMaterial;
+    window.deleteTool = deleteTool;
+    window.reassignTool = reassignTool;
+    window.deleteRental = deleteRental;
+    window.openContractorPaymentModal = openContractorPaymentModal;
+    window.deleteContractor = deleteContractor;
+    window.deleteContractorPayment = deleteContractorPayment;
+
+    // Initialize App
+    initApp();
+  </script>
+ </body>
+</html>
